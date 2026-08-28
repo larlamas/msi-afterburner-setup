@@ -46,18 +46,30 @@ Write-Host "Installing: MSI Afterburner. Please wait . . ."
 Write-Host ""
 Write-Host "GPU 'Power' & 'Power Percent' disabled." -ForegroundColor Red
 Write-Host "This causes FPS and 1% low issues enabled." -ForegroundColor Red
-# download msi afterburner (aktuálnaya versiya 4.6.7 Beta 2)
-$url = "https://download.msi.com/uti_exe/vga/MSIAfterburnerSetup467Beta2.zip"
-$zipFile = "$env:TEMP\MSIAfterburnerSetup467Beta2.zip"
-$extractPath = "$env:TEMP\MSI_Afterburner"
-Get-FileFromWeb -URL $url -File $zipFile
+# download MSI Afterburner 4.6.7 Beta 4 and RTSS 7.3.8 Beta 1
+$afterburnerUrl = "https://ftp.nluug.nl/pub/games/PC/guru3d/afterburner/beta/%5BGuru3D%5D-MSIAfterburnerSetup467Beta4Build17439.rar"
+$rtssUrl = "https://ftp.nluug.nl/pub/games/PC/guru3d/afterburner/beta/%5BGuru3D%5D-RTSSSetup738Beta1Build28315.rar"
+$afterburnerArchive = "$env:TEMP\[Guru3D]-MSIAfterburnerSetup467Beta4Build17439.rar"
+$rtssArchive = "$env:TEMP\[Guru3D]-RTSSSetup738Beta1Build28315.rar"
+$afterburnerExtractPath = "$env:TEMP\MSI_Afterburner_467Beta4"
+$rtssExtractPath = "$env:TEMP\RTSS_738Beta1"
 
-# extract zip
-Expand-Archive -Path $zipFile -DestinationPath $extractPath -Force
+Get-FileFromWeb -URL $afterburnerUrl -File $afterburnerArchive
+Get-FileFromWeb -URL $rtssUrl -File $rtssArchive
 
-# install msi afterburner
-$installer = Get-ChildItem -Path $extractPath -Filter "*.exe" | Select-Object -First 1
-Start-Process -wait $installer.FullName -ArgumentList "/S"
+# extract RAR archives with the tar utility included in Windows
+New-Item -Path $afterburnerExtractPath -ItemType Directory -Force | Out-Null
+New-Item -Path $rtssExtractPath -ItemType Directory -Force | Out-Null
+& tar.exe -xf $afterburnerArchive -C $afterburnerExtractPath
+if ($LASTEXITCODE -ne 0) { throw "Failed to extract MSI Afterburner archive." }
+& tar.exe -xf $rtssArchive -C $rtssExtractPath
+if ($LASTEXITCODE -ne 0) { throw "Failed to extract RTSS archive." }
+
+# install MSI Afterburner and RTSS
+$afterburnerInstaller = Join-Path $afterburnerExtractPath "MSIAfterburnerSetup467Beta4.exe"
+$rtssInstaller = Join-Path $rtssExtractPath "RTSSSetup738Beta1.exe"
+Start-Process -Wait $afterburnerInstaller -ArgumentList "/S"
+Start-Process -Wait $rtssInstaller -ArgumentList "/S"
 # new folder
 New-Item -Path "$env:SystemDrive\Program Files (x86)\MSI Afterburner" -Name "Profiles" -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
 # create config for msi afterburner
